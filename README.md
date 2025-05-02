@@ -1,0 +1,1 @@
+# xfce-liveboot-rice
