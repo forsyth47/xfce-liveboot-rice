@@ -24,7 +24,7 @@ cp -r ./Cursor-macOS/* ~/.icons #cursor
 cp -r ./GTKTheme-WhiteSur-Dark/* ~/.themes #gtk
 cp -r ./Icons-WhiteSur-green/* ~/.icons #icon
 mkdir -p ~/.local/share/plank/themes
-cp ./Plank-mcOS-BS-iMacM1-THEME-PACK/* ~/.local/share/plank/themes #plank
+cp -r ./Plank-mcOS-BS-iMacM1-THEME-PACK/* ~/.local/share/plank/themes #plank
 
 # Define paths and themes
 THEME_NAME="WhiteSur-Dark"
@@ -61,21 +61,43 @@ mkdir -p ~/.config/plank/dock1/
 echo "[PlankDockPreferences]" > ~/.config/plank/dock1/settings
 echo "Theme=$PLANK_THEME" >> ~/.config/plank/dock1/settings
 
-killall plank
-plank &
+# Set Plank to autostart
+echo "Setting Plank to autostart..."
+mkdir -p ~/.config/autostart
+cat <<EOF > ~/.config/autostart/plank.desktop
+[Desktop Entry]
+Type=Application
+Exec=plank
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+Name=Plank
+Comment=Start Plank dock automatically
+EOF
+
+# Make the .desktop file executable
+chmod +x ~/.config/autostart/plank.desktop
 
 # Download and set the wallpaper
 WALLPAPER_URL="https://w.wallhaven.cc/full/vq/wallhaven-vq76dp.jpg"
-WALLPAPER_PATH="$HOME/Pictures/Wallpapers/wallhaven-vq76dp.jpg"
+WALLPAPER_PATH="$HOME/Pictures/wallhaven-vq76dp.jpg"
 
+cd $HOME/Pictures
 echo "Downloading wallpaper..."
-wget -O "$WALLPAPER_PATH" "$WALLPAPER_URL"
+wget "$WALLPAPER_URL"
 
 echo "Setting wallpaper..."
-for workspace in $(xfconf-query -c xfce4-desktop -p /backdrop -l | grep "screen0/monitor0/workspace"); do
-    xfconf-query -c xfce4-desktop -p "$workspace/last-image" -s "$WALLPAPER_PATH"
-    xfconf-query -c xfce4-desktop -p "$workspace/image-path" -s "$WALLPAPER_PATH"
-    xfconf-query -c xfce4-desktop -p "$workspace/image-style" -s 5  # 5 = Zoomed (adjust as needed)
+# Get all monitors and workspaces
+for path in $(xfconf-query -c xfce4-desktop -p /backdrop -l | grep "/last-image"); do
+    # Extract the full path for the current monitor/workspace
+    base_path=$(dirname "$path")
+    
+    # Set the wallpaper path
+    xfconf-query -c xfce4-desktop -p "$base_path/last-image" -s "$WALLPAPER_PATH" || true
+    xfconf-query -c xfce4-desktop -p "$base_path/image-path" -s "$WALLPAPER_PATH" || true
+    
+    # Set the image style (5 = Zoomed)
+    xfconf-query -c xfce4-desktop -p "$base_path/image-style" -s 5 || true
 done
 
 echo "Configuration applied successfully!"
